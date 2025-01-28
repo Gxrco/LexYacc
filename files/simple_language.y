@@ -35,14 +35,17 @@ statement_list: statement
 
 statement:
       assignment SEMI
-    | expression ':' { /* ... */ }
-
+    | expression ':'          
+      {
+        std::cout << $1 << std::endl;
+      }
     | error SEMI
       {
         yyerror("Error sintáctico en statement.");
-        yyerrok;      
+        yyerrok;
       }
     ;
+
 
 
 assignment: ID '=' expression
