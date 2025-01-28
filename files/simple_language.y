@@ -3,7 +3,12 @@
 #include <string>
 #include <map>
 static std::map<std::string, int> vars;
-inline void yyerror(const char *str) { std::cout << str << std::endl; }
+inline void yyerror(const char *s) {
+    if (std::string(s) == "syntax error") {
+        return;
+    }
+    std::cout << "Parser error: " << s << std::endl;
+}
 int yylex();
 %}
 
@@ -29,7 +34,14 @@ statement_list: statement
     ;
 
 statement: assignment SEMI
-    | expression ':'          { std::cout << $1 << std::endl; }
+    | expression ':'          { std::cout << "Variable asignada con valor: " << $1 << std::endl; }
+    | error
+      {
+        yyerror("Error sintáctico en statement.");
+        yyclearin; // descartar el token que causo el error.
+        yyerrok;
+      }
+    ;
     ;
 
 assignment: ID '=' expression
@@ -41,12 +53,28 @@ assignment: ID '=' expression
     ;
 
 expression: NUMBER                  { $$ = $1; }
-    | ID                            { $$ = vars[*$1];      delete $1; }
+    | ID                            {
+        // Si la variable no existe, asume 0 o lanza error
+        if (vars.find(*$1) == vars.end()) {
+            std::cerr << "Warning: variable '" << *$1 << "' no inicializada. Valor = 0" << std::endl;
+            $$ = 0;
+        } else {
+            $$ = vars[*$1];
+        }
+        delete $1;
+      }
     | expression '+' expression     { $$ = $1 + $3; }
     | expression '-' expression     { $$ = $1 - $3; }
     | expression '*' expression     { $$ = $1 * $3; }
-    | expression '/' expression     { $$ = $1 / $3; }
-    | expression '/' expression     { $$ = $1 / $3; }
+    | expression '/' expression     {
+        if ($3 == 0) {
+            std::cerr << "Error: División entre 0." << std::endl;
+            $$ = 0;
+        } else {
+            $$ = $1 / $3;
+        }
+      }
+    | '(' expression ')'            { $$ = $2; } 
     ;
 
 %%
