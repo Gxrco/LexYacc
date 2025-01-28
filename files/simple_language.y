@@ -33,16 +33,17 @@ statement_list: statement
     | statement_list statement
     ;
 
-statement: assignment SEMI
-    | expression ':'          { std::cout << "Variable asignada con valor: " << $1 << std::endl; }
-    | error
+statement:
+      assignment SEMI
+    | expression ':' { /* ... */ }
+
+    | error SEMI
       {
         yyerror("Error sintáctico en statement.");
-        yyclearin; // descartar el token que causo el error.
-        yyerrok;
+        yyerrok;      
       }
     ;
-    ;
+
 
 assignment: ID '=' expression
     {   
@@ -54,7 +55,6 @@ assignment: ID '=' expression
 
 expression: NUMBER                  { $$ = $1; }
     | ID                            {
-        // Si la variable no existe, asume 0 o lanza error
         if (vars.find(*$1) == vars.end()) {
             std::cerr << "Warning: variable '" << *$1 << "' no inicializada. Valor = 0" << std::endl;
             $$ = 0;
